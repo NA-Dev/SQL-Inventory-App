@@ -29,7 +29,7 @@ function getCredentials() {
 		},
 		{
 			name: 'mySQLPass',
-			type: 'input',
+			type: 'password',
 			message: 'What is your mySQL@localhost password?',
 			default: ''
 		}
