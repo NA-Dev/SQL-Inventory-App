@@ -71,14 +71,14 @@ function createDB(connection) {
 
   connection.query(
 		'CREATE DATABASE IF NOT EXISTS bamazon',
-		function (err, result) {
+		function (err, res) {
 			if (err) throw err;
 		}
 	);
 
 	connection.query(
 		'USE bamazon',
-		function (err, result) {
+		function (err, res) {
 			if (err) throw err;
 		}
 	);
@@ -92,7 +92,7 @@ function createDB(connection) {
  		  'stock_quantity INT(10) DEFAULT 0,' +
 		 'PRIMARY KEY (item_id)' +
 	  ')',
-		function (err, result) {
+		function (err, res) {
 			if (err) throw err;
 		}
 	);
@@ -116,7 +116,7 @@ function createDB(connection) {
 		'INSERT INTO products ' +
 		'(item_id, product_name, department_name, price, stock_quantity) ' +
 		'VALUES ?', [values],
-		function (err, result) {
+		function (err, res) {
 			if (err) throw err;
 		}
   );
@@ -128,7 +128,7 @@ function displayTable(connection) {
 
 	connection.query(
 		'USE bamazon',
-		function (err, result) {
+		function (err, res) {
 			if (err) throw err;
 		}
 	);
@@ -145,18 +145,15 @@ function displayTable(connection) {
 				
 				function(table) {
 					table.show();
+					promptAction(connection);
 				});
 
 			}
 		}
 	);
-
-	promptAction();
 }
 
-function promptAction() {
-	var id = 0; //placeholder for ID
-
+function promptAction(connection) {
 	inquirer.prompt([
 		{
 			name: 'id',
@@ -166,7 +163,6 @@ function promptAction() {
 				pattern = '^[0-9]+$';
 				isValid = input.match(pattern);
 				if(isValid) {
-					id = input;
 					return true;
 				} else {
 					return 'Invalid input. Enter an integer item_id.';
@@ -176,18 +172,26 @@ function promptAction() {
 		{
 			name: 'qty',
 			type: 'input',
-			message: 'What quantity of item_id: ' + id + ' would you like to buy?',
+			message: 'What quantity of that item would you like to buy?',
 			validate: function(input) {
 				pattern = '^[0-9]+$';
 				isValid = input.match(pattern);
 				if(isValid) {
 					return true;
 				} else {
-					return 'Invalid input. Enter an integer item_id.';
+					return 'Invalid input. Enter an integer quantity.';
 				}
 			}
 		},
 	])
 	.then(function(answers) {
+		connection.query(
+			'SELECT stock_quantity FROM products WHERE ?',
+			{item_id: answers.id},
+			function(err, res) {
+				if (err) throw err;
+				if (res) console.log(res[0].stock_quantity);
+			}
+		);
 	});
 }
