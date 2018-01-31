@@ -18,6 +18,8 @@
   "homepage": "https://github.com/NA-Dev/SQL-Inventory-App#readme",
   "dependencies": {
     "inquirer": "^5.0.1",
-    "mysql": "^2.15.0"
+    "json-table": "^0.1.3",
+    "mysql": "^2.15.0",
+    "table": "^4.0.2"
   }
 }

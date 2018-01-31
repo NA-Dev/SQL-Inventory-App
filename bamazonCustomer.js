@@ -1,6 +1,7 @@
 var mysql = require("mysql");
 var inquirer = require('inquirer');
-var table = require('table');
+// var table = require('table');
+var json_tb = require('json-table');
 
 getCredentials();
 
@@ -123,6 +124,8 @@ function createDB(connection) {
 
 function displayTable(connection) {
 
+	console.log('- - -~~~ Bamazon Store Inventory ~~~ - - -\n');
+
 	connection.query(
 		'USE bamazon',
 		function (err, result) {
@@ -134,7 +137,57 @@ function displayTable(connection) {
 		'SELECT * FROM products',
 		function (err, res) {
 			if (err) throw err;
-			if (res) console.log(res);
+			if (res) {
+				//prints JSON object into a table
+				var json_tb_out = new json_tb(res, {
+					chars: { 'top': '═' , 'top-mid': '╤' , 'top-left': '╔' , 'top-right': '╗', 'bottom': '═' , 'bottom-mid': '╧' , 'bottom-left': '╚' , 'bottom-right': '╝', 'left': '║' , 'left-mid': '╟' , 'mid': '─' , 'mid-mid': '┼', 'right': '║' , 'right-mid': '╢' , 'middle': '│' }
+				}, 
+				
+				function(table) {
+					table.show();
+				});
+
+			}
 		}
 	);
+
+	promptAction();
+}
+
+function promptAction() {
+	var id = 0; //placeholder for ID
+
+	inquirer.prompt([
+		{
+			name: 'id',
+			type: 'input',
+			message: 'Which item_id would you like to buy?',
+			validate: function(input) {
+				pattern = '^[0-9]+$';
+				isValid = input.match(pattern);
+				if(isValid) {
+					id = input;
+					return true;
+				} else {
+					return 'Invalid input. Enter an integer item_id.';
+				}
+			}
+		},
+		{
+			name: 'qty',
+			type: 'input',
+			message: 'What quantity of item_id: ' + id + ' would you like to buy?',
+			validate: function(input) {
+				pattern = '^[0-9]+$';
+				isValid = input.match(pattern);
+				if(isValid) {
+					return true;
+				} else {
+					return 'Invalid input. Enter an integer item_id.';
+				}
+			}
+		},
+	])
+	.then(function(answers) {
+	});
 }
