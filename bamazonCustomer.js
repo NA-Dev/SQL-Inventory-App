@@ -1,6 +1,5 @@
 var mysql = require("mysql");
 var inquirer = require('inquirer');
-// var table = require('table');
 var json_tb = require('json-table');
 
 var connection = {}; //global variable so I don't have to pass it around
@@ -51,7 +50,6 @@ function getCredentials() {
 			if (err) throw err;
 			console.log("connected as id " + connection.threadId);
 			checkIfDB();
-			displayTable();
 		});
 	});
 }
@@ -62,7 +60,12 @@ function checkIfDB() {
 		'SELECT SCHEMA_NAME FROM INFORMATION_SCHEMA.SCHEMATA WHERE SCHEMA_NAME = "bamazon"',
 		function (err, res) {
 			if (err) throw err;
-			if (!res[0].SCHEMA_NAME) createDB();
+		
+			if (!res[0]) {
+				createDB();
+			} else {
+				displayInventory();
+			}
 		}
 	);
 }
@@ -70,7 +73,7 @@ function checkIfDB() {
 // creates database and table if it does not exist
 // I know this isn't standard practice, but CONVENTIONS BE DARNED!
 function createDB() {
-  console.log('creating db');
+  console.log('Creating store database...');
 
   connection.query(
 		'CREATE DATABASE IF NOT EXISTS bamazon',
@@ -101,31 +104,33 @@ function createDB() {
 	);
 
 	var values = [
-		[1, 'apples', 'produce', 0.50, 25],
-		[2, 'bananas', 'produce', 0.25, 48],
-		[3, 'Doritos chips', 'snacks', 1.99, 18],
-		[4, 'tortilla chips', 'snacks', 1.29, 20],
-		[5, 'salsa', 'snacks', 1.89, 25],
-		[6, 'beef filet mignon', 'meats', 15.00, 10],
-		[7, 'chicken wing', 'meats', 0.59, 50],
-		[8, 'milk', 'dairy', 1.68, 30],
-		[9, 'parmesean cheese', 'dairy', 2.00, 22],
-		[10, 'pork loin', 'meat', 8.95, 14],
-		[11, 'Amy\'s pizza', 'frozen', 9.15, 10],
-		[12, 'peas', 'frozen', 2.05, 30]
+		['apples', 'produce', 0.50, 25],
+		['bananas', 'produce', 0.25, 48],
+		['Doritos chips', 'snacks', 1.99, 18],
+		['tortilla chips', 'snacks', 1.29, 20],
+		['salsa', 'snacks', 1.89, 25],
+		['beef filet mignon', 'meats', 15.00, 10],
+		['chicken wing', 'meats', 0.59, 50],
+		['milk', 'dairy', 1.68, 30],
+		['parmesean cheese', 'dairy', 2.00, 22],
+		['pork loin', 'meat', 8.95, 14],
+		['Amy\'s pizza', 'frozen', 9.15, 4],
+		['peas', 'frozen', 2.05, 30]
 	];
 
 	connection.query(
 		'INSERT INTO products ' +
-		'(item_id, product_name, department_name, price, stock_quantity) ' +
+		'(product_name, department_name, price, stock_quantity) ' +
 		'VALUES ?', [values],
 		function (err, res) {
 			if (err) throw err;
 		}
-  );
+	);
+	
+	displayInventory();
 }
 
-function displayTable() {
+function displayInventory() {
 
 	console.log('\n- - -~~~ Bamazon Store Inventory ~~~ - - -\n');
 
@@ -263,7 +268,7 @@ function purchase(buyQty, itemData) {
 				  buyQty + ') of item_id ' + id + 
 				  ' at a total cost of $' + cost + '.\n'
 				);
-				setTimeout(displayTable, 5000);
+				setTimeout(displayInventory, 5000);
 			}
 		}
 	);
