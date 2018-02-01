@@ -3,6 +3,8 @@ var inquirer = require('inquirer');
 // var table = require('table');
 var json_tb = require('json-table');
 
+var connection = {}; //global variable so I don't have to pass it around
+
 getCredentials();
 
 function getCredentials() {
@@ -36,7 +38,7 @@ function getCredentials() {
 		}
 	])
 	.then(function(answers) {
-		var connection = mysql.createConnection(
+		connection = mysql.createConnection(
 			{
 				host: 'localhost',
 				port: answers.mysqlPort,
@@ -48,25 +50,26 @@ function getCredentials() {
 		connection.connect(function(err) {
 			if (err) throw err;
 			console.log("connected as id " + connection.threadId);
-			checkIfDB(connection);
-			displayTable(connection);
+			checkIfDB();
+			displayTable();
 		});
 	});
 }
 
 //checks to see if database already exists
-function checkIfDB(connection) {
+function checkIfDB() {
 	connection.query(
 		'SELECT SCHEMA_NAME FROM INFORMATION_SCHEMA.SCHEMATA WHERE SCHEMA_NAME = "bamazon"',
 		function (err, res) {
 			if (err) throw err;
-			if (!res[0].SCHEMA_NAME) createDB(connection);
+			if (!res[0].SCHEMA_NAME) createDB();
 		}
 	);
 }
 
 // creates database and table if it does not exist
-function createDB(connection) {
+// I know this isn't standard practice, but CONVENTIONS BE DARNED!
+function createDB() {
   console.log('creating db');
 
   connection.query(
@@ -122,9 +125,9 @@ function createDB(connection) {
   );
 }
 
-function displayTable(connection) {
+function displayTable() {
 
-	console.log('- - -~~~ Bamazon Store Inventory ~~~ - - -\n');
+	console.log('\n- - -~~~ Bamazon Store Inventory ~~~ - - -\n');
 
 	connection.query(
 		'USE bamazon',
@@ -145,7 +148,7 @@ function displayTable(connection) {
 				
 				function(table) {
 					table.show();
-					promptAction(connection);
+					confirmPurchase();
 				});
 
 			}
@@ -153,7 +156,27 @@ function displayTable(connection) {
 	);
 }
 
-function promptAction(connection) {
+function confirmPurchase() {
+
+	inquirer.prompt(
+		{
+			name: 'confirm',
+			type: 'confirm',
+			message: 'Would you like to make a purchase?',
+			default: 'true'
+		}
+	)
+	.then(function(answers) {
+		if (answers.confirm) {
+			purchasePrompt();
+		} else {
+			console.log('\nThank you for using the store. Goodbye.\n');
+			connection.end();
+		}
+	});
+}
+
+function purchasePrompt() {
 	inquirer.prompt([
 		{
 			name: 'id',
@@ -184,14 +207,65 @@ function promptAction(connection) {
 			}
 		},
 	])
-	.then(function(answers) {
+	.then(function checkStock(answers) {
+		var buyQty = answers.qty;
+		var id = answers.id;
+
 		connection.query(
-			'SELECT stock_quantity FROM products WHERE ?',
+			'SELECT * FROM products WHERE ?',
 			{item_id: answers.id},
 			function(err, res) {
 				if (err) throw err;
-				if (res) console.log(res[0].stock_quantity);
+				
+				if (res[0]) {
+					var stockQty = res[0].stock_quantity;
+
+					if (buyQty > stockQty) {
+						console.log(
+							'\nThe store does not have ' + 
+							buyQty + ' of item_id ' + id + 
+							'. Please revise your selection.\n'
+						);
+						purchasePrompt();
+
+					} else {
+						purchase(buyQty, res[0]);
+					}
+
+				} else {
+					console.log('\nThat item_id does not exist yet, try another.\n');
+					purchasePrompt();
+				}
 			}
 		);
 	});
 }
+
+function purchase(buyQty, itemData) {
+	var id = itemData.item_id;
+	var price = itemData.price;
+	var stockQty = itemData.stock_quantity;
+	var newStockQty = stockQty - buyQty;
+	var cost = (price * buyQty).toFixed(2);
+
+	connection.query(
+		'UPDATE products SET ? WHERE ?',
+		[{
+			stock_quantity: newStockQty
+		},{
+      item_id: id
+		}],
+		function(err, res) {
+			if (err) throw err;
+			else {
+				console.log(
+				  '\nPurchase complete for Qty(' +
+				  buyQty + ') of item_id ' + id + 
+				  ' at a total cost of $' + cost + '.\n'
+				);
+				setTimeout(displayTable, 5000);
+			}
+		}
+	);
+}
+
