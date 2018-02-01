@@ -82,12 +82,7 @@ function createDB() {
 		}
 	);
 
-	connection.query(
-		'USE bamazon',
-		function (err, res) {
-			if (err) throw err;
-		}
-	);
+	useDatabase();
 		
 	connection.query(
 		'CREATE TABLE IF NOT EXISTS products (' +
@@ -130,19 +125,23 @@ function createDB() {
 	displayInventory();
 }
 
-function displayInventory() {
-
-	console.log('\n- - -~~~ Bamazon Store Inventory ~~~ - - -\n');
-
-	connection.query(
+function useDatabase() {
+  connection.query(
 		'USE bamazon',
 		function (err, res) {
 			if (err) throw err;
 		}
 	);
+}
+
+function displayInventory() {
+
+	console.log('\n- - - ~~~ Bamazon Store Inventory ~~~ - - -\n');
+
+	useDatabase();
 
 	connection.query(
-		'SELECT * FROM products',
+		'SELECT item_id, product_name, department_name, price, stock_quantity FROM products',
 		function (err, res) {
 			if (err) throw err;
 			if (res) {
@@ -155,7 +154,6 @@ function displayInventory() {
 					table.show();
 					confirmPurchase();
 				});
-
 			}
 		}
 	);
@@ -210,15 +208,15 @@ function purchasePrompt() {
 					return 'Invalid input. Enter an integer quantity.';
 				}
 			}
-		},
+		}
 	])
 	.then(function checkStock(answers) {
-		var buyQty = answers.qty;
-		var id = answers.id;
+		var buyQty = Number(answers.qty);
+		var id = Number(answers.id);
 
 		connection.query(
 			'SELECT * FROM products WHERE ?',
-			{item_id: answers.id},
+			{item_id: id},
 			function(err, res) {
 				if (err) throw err;
 				
