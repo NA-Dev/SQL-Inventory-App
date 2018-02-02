@@ -225,39 +225,80 @@ function restockInventory() {
 
 function addNewProduct() {
 
-	console.log('\n- - -~~~ Bamazon Store Inventory ~~~ - - -\n');
+	inquirer.prompt([
+    {
+      name: 'name',
+      type: 'input',
+      message: 'What is the name of the item you would like to add?',
+      validate: function(input) {
+        pattern = '^[a-zA-Z ]+$';
+        isValid = input.match(pattern);
+        if(isValid) {
+          return true;
+        } else {
+          return 'Invalid input. Enter only letter characters and spaces.';
+        }
+      }
+    },
+    {
+      name: 'department',
+      type: 'list',
+      message: 'In which department does that item belong?',
+      choices: [
+        'dairy',
+        'meat',
+        'produce',
+        'snacks'
+      ]
+    },
+    {
+      name: 'price',
+      type: 'input',
+      message: 'What is the unit price of the item in dollars?',
+      validate: function(input) {
+        pattern = '^[0-9]+(\.[0-9][0-9])?$';
+        isValid = input.match(pattern);
+        if(isValid) {
+          return true;
+        } else {
+          return 'Invalid input. Enter only decimal numbers with up to two decimal places.';
+        }
+      }
+    },
+    {
+      name: 'qty',
+      type: 'input',
+      message: 'What quantity of that item would you like to add?',
+      validate: function(input) {
+        pattern = '^[0-9]+$';
+        isValid = input.match(pattern);
+        if(isValid) {
+          return true;
+        } else {
+          return 'Invalid input. Enter an integer quantity.';
+        }
+      }
+    },
+  ]).then(function(answers) {
+    var name = answers.name;
+    var department = answers.department;
+    var price = Number(answers.price);
+    var qty = Number(answers.qty);
+    var values = [[name, department, price, qty]];
 
-	useDatabase();
+    useDatabase();
   
-  connection.query(
-		'INSERT INTO products ' +
-		'(item_id, product_name, department_name, price, stock_quantity) ' +
-		'VALUES ?', [values],
-		function (err, res) {
-			if (err) throw err;
-		}
-  );
-
-	connection.query(
-		'SELECT * FROM products',
-		function (err, res) {
-			if (err) throw err;
-			if (res) {
-				//prints JSON object into a table
-				var json_tb_out = new json_tb(res, {
-					chars: { 'top': '═' , 'top-mid': '╤' , 'top-left': '╔' , 'top-right': '╗', 'bottom': '═' , 'bottom-mid': '╧' , 'bottom-left': '╚' , 'bottom-right': '╝', 'left': '║' , 'left-mid': '╟' , 'mid': '─' , 'mid-mid': '┼', 'right': '║' , 'right-mid': '╢' , 'middle': '│' }
-				}, 
-				
-				function(table) {
-					table.show();
-				});
-
-			}
-		}
-	);
+    connection.query(
+      'INSERT INTO products ' +
+      '(product_name, department_name, price, stock_quantity) ' +
+      'VALUES ?', [values],
+      function (err, res) {
+        if (err) throw err;
+        if (res) {
+          console.log('\nQty(' + qty + ') ' + name + ' added.\n');
+          setTimeout(selectAction, 5000);
+        }
+      }
+    );
+  });
 }
-
-
-
-
-
