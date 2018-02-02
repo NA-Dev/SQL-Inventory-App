@@ -6,7 +6,11 @@ var connection = {}; //global variable so I don't have to pass it around
 
 getCredentials();
 
+// prompts user for localhost credentials instead
+// of saving in this file and revealing passwords
+
 function getCredentials() {
+	
 	inquirer.prompt([
 		{
 			name: 'mySQLPort',
@@ -16,9 +20,12 @@ function getCredentials() {
 			validate: function(input) {
 				pattern = '^[0-9]+$';
 				isValid = input.match(pattern);
+				
 				if(isValid) {
 					return true;
-				} else {
+				} 
+				
+				else {
 					return 'Invalid input. Enter an integer port number.';
 				}
 			}
@@ -36,6 +43,7 @@ function getCredentials() {
 			default: ''
 		}
 	])
+	
 	.then(function(answers) {
 		connection = mysql.createConnection(
 			{
@@ -48,22 +56,28 @@ function getCredentials() {
 
 		connection.connect(function(err) {
 			if (err) throw err;
+		
 			console.log("connected as id " + connection.threadId);
+			
 			checkIfDB();
 		});
 	});
 }
 
-//checks to see if database already exists
+// checks to see if database already exists
+
 function checkIfDB() {
 	connection.query(
 		'SELECT SCHEMA_NAME FROM INFORMATION_SCHEMA.SCHEMATA WHERE SCHEMA_NAME = "bamazon"',
+		
 		function (err, res) {
 			if (err) throw err;
 		
 			if (!res[0]) {
 				createDB();
-			} else {
+			} 
+			
+			else {
 				displayInventory();
 			}
 		}
@@ -72,11 +86,13 @@ function checkIfDB() {
 
 // creates database and table if it does not exist
 // I know this isn't standard practice, but CONVENTIONS BE DARNED!
+
 function createDB() {
   console.log('Creating store database...');
 
   connection.query(
 		'CREATE DATABASE IF NOT EXISTS bamazon',
+		
 		function (err, res) {
 			if (err) throw err;
 		}
@@ -93,6 +109,7 @@ function createDB() {
  		  'stock_quantity INT(10) DEFAULT 0,' +
 		 'PRIMARY KEY (item_id)' +
 	  ')',
+		
 		function (err, res) {
 			if (err) throw err;
 		}
@@ -117,6 +134,7 @@ function createDB() {
 		'INSERT INTO products ' +
 		'(product_name, department_name, price, stock_quantity) ' +
 		'VALUES ?', [values],
+		
 		function (err, res) {
 			if (err) throw err;
 		}
@@ -128,6 +146,7 @@ function createDB() {
 function useDatabase() {
   connection.query(
 		'USE bamazon',
+		
 		function (err, res) {
 			if (err) throw err;
 		}
@@ -135,7 +154,6 @@ function useDatabase() {
 }
 
 function displayInventory() {
-
 	console.log('\n- - - ~~~ Bamazon Store Inventory ~~~ - - -\n');
 
 	useDatabase();
@@ -144,10 +162,19 @@ function displayInventory() {
 		'SELECT item_id, product_name, department_name, price, stock_quantity FROM products',
 		function (err, res) {
 			if (err) throw err;
+			
 			if (res) {
-				//prints JSON object into a table
+
+				//prints JSON object into a table using npm json-table
+
 				var json_tb_out = new json_tb(res, {
-					chars: { 'top': '═' , 'top-mid': '╤' , 'top-left': '╔' , 'top-right': '╗', 'bottom': '═' , 'bottom-mid': '╧' , 'bottom-left': '╚' , 'bottom-right': '╝', 'left': '║' , 'left-mid': '╟' , 'mid': '─' , 'mid-mid': '┼', 'right': '║' , 'right-mid': '╢' , 'middle': '│' }
+					chars: { 
+            'top': '═' , 'top-mid': '╤' , 'top-left': '╔' ,
+            'top-right': '╗', 'bottom': '═' , 'bottom-mid': '╧' ,
+            'bottom-left': '╚' , 'bottom-right': '╝', 'left': '║' ,
+            'left-mid': '╟' , 'mid': '─' , 'mid-mid': '┼',
+            'right': '║' , 'right-mid': '╢' , 'middle': '│' 
+					}
 				}, 
 				
 				function(table) {
@@ -172,7 +199,9 @@ function confirmPurchase() {
 	.then(function(answers) {
 		if (answers.confirm) {
 			purchasePrompt();
-		} else {
+		} 
+		
+		else {
 			console.log('\nThank you for using the store. Goodbye.\n');
 			connection.end();
 		}
@@ -188,9 +217,12 @@ function purchasePrompt() {
 			validate: function(input) {
 				pattern = '^[0-9]+$';
 				isValid = input.match(pattern);
+				
 				if(isValid) {
 					return true;
-				} else {
+				} 
+				
+				else {
 					return 'Invalid input. Enter an integer item_id.';
 				}
 			}
@@ -202,14 +234,18 @@ function purchasePrompt() {
 			validate: function(input) {
 				pattern = '^[0-9]+$';
 				isValid = input.match(pattern);
+				
 				if(isValid) {
 					return true;
-				} else {
+				} 
+				
+				else {
 					return 'Invalid input. Enter an integer quantity.';
 				}
 			}
 		}
 	])
+
 	.then(function checkStock(answers) {
 		var buyQty = Number(answers.qty);
 		var id = Number(answers.id);
@@ -217,6 +253,7 @@ function purchasePrompt() {
 		connection.query(
 			'SELECT * FROM products WHERE ?',
 			{item_id: id},
+
 			function(err, res) {
 				if (err) throw err;
 				
@@ -230,12 +267,14 @@ function purchasePrompt() {
 							'. Please revise your selection.\n'
 						);
 						purchasePrompt();
+					} 
 
-					} else {
+					else {
 						purchase(buyQty, res[0]);
 					}
-
-				} else {
+				} 
+				
+				else {
 					console.log('\nThat item_id does not exist yet, try another.\n');
 					purchasePrompt();
 				}
@@ -255,17 +294,20 @@ function purchase(buyQty, itemData) {
 		'UPDATE products SET ? WHERE ?',
 		[{
 			stock_quantity: newStockQty
-		},{
+		},
+		{
       item_id: id
 		}],
 		function(err, res) {
 			if (err) throw err;
+			
 			else {
 				console.log(
 				  '\nPurchase complete for Qty(' +
 				  buyQty + ') of item_id ' + id + 
 				  ' at a total cost of $' + cost + '.\n'
 				);
+
 				setTimeout(displayInventory, 5000);
 			}
 		}
