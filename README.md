@@ -3,25 +3,34 @@
 ##### A Node.js application for manupilating a mySQL product inventory database
 A demo video is located [here](https://youtu.be/GUq-9Y3aKok).
 
-#### To install:
 
-#### bamazonCustomer.js
-This program will read all of the inventory items from a mySQL database into an object in memory,
-then display the products in a table format. The customer can now type in the item ID of the
-product that they wish to purchase. The inquirer function will validate the input to make sure
-that the item ID exists in our inventory. After supplying a valid item ID, the shopper is asked
-to enter the quantity that they wish to buy. Again, the inquirer function will validate the input
-to make sure that the quantity ordered does not exceed the quantity in stock. Once validated,
-the inventory is adjusted in the database and the order is finalized.
+#### Installation
+- Download the javascript and node package files [here](https://github.com/NA-Dev/SQL-Inventory-App).
+- Using your terminal, navigate to the directory containing those files
+- Enter "npm install" into the terminal to install dependencies
+- Enter "node bamazonCustomer" into the terminal to run the Customer Application
+- Enter "node bamazonManager" into the terminal to run the Manager Application
+- Follow the on-screen prompts to interact with the applications however you like
 
 
+#### bamazonCustomer.js  -- Execute this application first
+This application first prompts the user for their localhost credentials. After successful connection,
+it then checks to see if a "bamazon" database exists on the server. If it does not, the database is 
+created, and rows of product data are inserted. If it already exists or after creation, then a 
+connection is made to the database.
 
-#### bamazonManager.js
-This program will allow the store manager to view the inventory database, view products that have
-fewer than 5 units in stock, add stock quantities, and add new products. At each step, the inquirer
-function validates the input as to minimize the chance for errors (e.g., it will not allow duplicate
-Item IDs to be created, and the Item ID must exist in order to add inventory to it). As with the
-bamazonCustomer module, this module loads the database into an object for ease of manipulation. Each
-time the database changes, we must refresh the object to get the new data.
+Next, all data in the database is displayed in the terminal with prettified formatting thanks to the
+npm table-json package. The user is then asked if they would like to purchase an item. If not, then
+the database connection ends. If so, the user is prompted to enter which item and quantity they would
+like to buy. All inputs are validated so that only numbers or strings may be entered as appropriate.
 
-Demo video is located [here](https://youtu.be/rIOBuwcHziE).
+
+#### bamazonManager.js  -- Execute this application second
+"bamazonManager" can only be run once the "bamazon" database exists on localhost. If you do not have
+a "bamazon" database, you will need to launch "bamazonCustomer" as instructed above first. This step
+need only be performed once.
+
+This program allows the user to perform a number of advanced functions in addition to viewing the 
+current product inventory. They can view items with less than Qty(5) in stock. They can add stock
+to existing inventory items, or add new products to the inventory. At each stage, inputs are 
+validated, and the appropriate changes are made to the mySQL database to reflect the inputs.
